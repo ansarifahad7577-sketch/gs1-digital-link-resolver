@@ -10,9 +10,10 @@ The resolver is **functionally complete** for GS1 Digital Link v1.2 routing:
 parser + full AI table, declarative YAML routing, RFC 9264 link-sets, content
 negotiation, four DPP validators (noop/smoke/schema/http), the
 `/.well-known/gs1resolver` description file, `/healthz`, Prometheus `/metrics`,
-signed Docker releases, and a deployment guide. The four NGI Zero Commons Fund
-milestones (parser, core resolver, validator wire-up, deployment docs) are
-delivered.
+signed Docker releases, and a deployment guide. The four milestones proposed in
+the NGI Zero Commons Fund application (parser, core resolver, validator wire-up,
+deployment docs) are delivered — built independently of that application's
+outcome, which is still under review.
 
 ## What 1.0 *means* here
 

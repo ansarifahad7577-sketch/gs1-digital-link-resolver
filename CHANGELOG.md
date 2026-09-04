@@ -57,8 +57,9 @@ First **stable** release. From this version the **configuration schema** and the
 **HTTP contract** are stable under Semantic Versioning — see
 [docs/stability.md](docs/stability.md). This is the first published release since
 0.2.0; the `0.2.1` and `0.3.0` tags were development waypoints (never published
-as images) and are consolidated here. Delivers NGI Zero Commons Fund Milestones 3
-(DPP validator wire-up) and 4 (deployment docs). Test suite 95 → 129.
+as images) and are consolidated here. Delivers Milestones 3 (DPP validator
+wire-up) and 4 (deployment docs) as proposed in the NGI Zero Commons Fund
+application. Test suite 95 → 129.
 
 ### Added
 

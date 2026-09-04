@@ -191,11 +191,15 @@ Operators can also implement the `Validator` protocol themselves. Validation out
 ## Project status
 
 **Stable — 1.1.** The configuration schema and HTTP contract are stable under
-Semantic Versioning; see [docs/stability.md](docs/stability.md). Supported by the
-[NGI Zero Commons Fund](https://nlnet.nl/commonsfund/) (NLnet Foundation,
-EU-funded). Post-1.0 direction is tracked in [ROADMAP.md](ROADMAP.md).
+Semantic Versioning; see [docs/stability.md](docs/stability.md). Post-1.0
+direction is tracked in [ROADMAP.md](ROADMAP.md).
 
-**Milestones delivered:**
+Development of this resolver was **proposed to** the
+[NGI Zero Commons Fund](https://nlnet.nl/commonsfund/) (NLnet Foundation,
+EU-funded) in the June 2026 call; that application is under review. The work
+below was built and released independently of its outcome.
+
+**Delivered:**
 
 | | Milestone |
 |---|---|
