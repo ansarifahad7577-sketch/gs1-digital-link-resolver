@@ -13,6 +13,7 @@ This project provides that resolver as a complete, self-hostable service:
 - Parses GS1 Digital Link URIs per **GS1 Digital Link standard v1.2**
 - Routes resolved URIs to DPP endpoints via declarative YAML configuration
 - Handles **content negotiation** — HTML for browsers, `application/ld+json` for machines
+- Publishes a **GS1 resolver description file** at `/.well-known/gs1resolver`
 - Ships as a **single Docker image**, deployable in under 10 minutes
 
 **Licence:** Apache 2.0 — use freely in any context, commercial or otherwise.
@@ -40,7 +41,7 @@ The release image ships on the GitHub Container Registry:
 
 ```bash
 docker run -p 8080:8080 \
-  ghcr.io/grigolatoe/gs1-digital-link-resolver:1.0.0
+  ghcr.io/grigolatoe/gs1-digital-link-resolver:1.1.0
 ```
 
 That binds the resolver on `localhost:8080` with the example config bundled
@@ -49,7 +50,7 @@ into the image. To bring your own routes, mount over `/app/config/routes.yaml`:
 ```bash
 docker run -p 8080:8080 \
   -v ./config/routes.yaml:/app/config/routes.yaml \
-  ghcr.io/grigolatoe/gs1-digital-link-resolver:1.0.0
+  ghcr.io/grigolatoe/gs1-digital-link-resolver:1.1.0
 ```
 
 Then visit:
@@ -79,10 +80,10 @@ procedure; the short version is:
 
 ```bash
 gpg --keyserver hkps://keys.openpgp.org --recv-keys 47DE71F021C986123851E8AD65A8E29C92A63D38
-gh release download v1.0.0 --repo grigolatoe/gs1-digital-link-resolver --pattern 'SIGNATURES-*'
-gpg --verify SIGNATURES-v1.0.0.txt.asc SIGNATURES-v1.0.0.txt
-docker pull ghcr.io/grigolatoe/gs1-digital-link-resolver:1.0.0
-# The digest reported by docker must match the one in SIGNATURES-v1.0.0.txt.
+gh release download v1.1.0 --repo grigolatoe/gs1-digital-link-resolver --pattern 'SIGNATURES-*'
+gpg --verify SIGNATURES-v1.1.0.txt.asc SIGNATURES-v1.1.0.txt
+docker pull ghcr.io/grigolatoe/gs1-digital-link-resolver:1.1.0
+# The digest reported by docker must match the one in SIGNATURES-v1.1.0.txt.
 ```
 
 ## Configuration
@@ -127,6 +128,44 @@ resolvers:
 
 The `?linkType=` query parameter (per GS1 DL §6.4) narrows the response to a single relation when provided. Q-values are honoured.
 
+## Resolver description file (`/.well-known/gs1resolver`)
+
+The GS1-Conformant Resolver Standard requires a resolver to publish a
+machine-readable description of itself. This service serves one at
+`/.well-known/gs1resolver` as `application/json`, and it validates against GS1's
+published [description-file schema](https://ref.gs1.org/standards/resolver/description-file-schema).
+
+The two mandatory fields are **derived from your running configuration**, so the
+document cannot silently drift from what the resolver actually does:
+
+- **`supportedPrimaryKeys`** — inferred from the primary keys your routes can
+  actually match (`primary_ai` clauses, plus AI `01` wherever a `gtin_prefix` /
+  `gtin_regex` clause appears). A catch-all route is deliberately *not* reported
+  as `"all"`: declaring blanket support for every GS1 key is a conformance claim
+  to make on purpose, not one to infer from a fallback rule.
+- **`resolverRoot`** — the origin the request arrived on. Behind a
+  TLS-terminating proxy, run uvicorn with `--proxy-headers` or set
+  `resolver_root` explicitly.
+
+Optional operator metadata goes in a `well_known:` block, which may be omitted
+entirely:
+
+```yaml
+well_known:
+  name: "Example DPP Resolver"
+  resolver_root: "https://id.example.com"     # optional; else the request origin
+  supported_primary_keys: ["01", "8003"]      # optional; else derived from routes
+  terms_of_use: "https://example.com/terms"
+  json_ld_context_location: "https://example.com/context.jsonld"
+  contact:
+    fn: "Example Brand B.V."
+```
+
+Keys are snake_case in YAML and map to the standard's camelCase properties.
+An invalid block — an unknown key, a value that is not a GS1 primary key, a
+wrong type — fails the service at **startup**, so a non-conformant description
+file never reaches a running resolver.
+
 ## DPP validator hook
 
 The resolver supports a pluggable validator that runs at resolve time and reports its outcome in the link-set response under `gs1:validationStatus`. Four implementations ship in-tree:
@@ -151,7 +190,7 @@ Operators can also implement the `Validator` protocol themselves. Validation out
 
 ## Project status
 
-**Stable — 1.0.** The configuration schema and HTTP contract are now stable under
+**Stable — 1.1.** The configuration schema and HTTP contract are stable under
 Semantic Versioning; see [docs/stability.md](docs/stability.md). Supported by the
 [NGI Zero Commons Fund](https://nlnet.nl/commonsfund/) (NLnet Foundation,
 EU-funded). Post-1.0 direction is tracked in [ROADMAP.md](ROADMAP.md).
@@ -167,7 +206,8 @@ EU-funded). Post-1.0 direction is tracked in [ROADMAP.md](ROADMAP.md).
 | ✅ | Content negotiation with q-value handling |
 | ✅ | Pluggable validator interface (no-op, smoke, schema, http) |
 | ✅ | HTTP service — FastAPI, Docker image |
-| ✅ | Conformance test suite (110 tests against GS1 DL §4.4–§4.6 + RFC 9264) |
+| ✅ | GS1 resolver description file at `/.well-known/gs1resolver`, validating against GS1's published schema |
+| ✅ | Conformance test suite (159 tests against GS1 DL §4.4–§4.6 + RFC 9264 + the resolver description file) |
 | ✅ | DPP validator wire-up — `schema` (live fetch + JSON-Schema) and `http` (external delegate) |
 | ✅ | Deployment / operator guide — [`docs/deployment.md`](docs/deployment.md) |
 | ✅ | Prometheus `/metrics` endpoint (requests, validations, latency, build info) |
@@ -188,7 +228,7 @@ Issues and PRs welcome. This project aims to serve the [CIRPASS-2 Community of P
 
 This resolver is maintained by **[Grigolato.IT](https://www.grigolato.it)** (Almere, Netherlands, KvK 97060658) — the company behind **[OrigoVero](https://www.origovero.com)**, the Digital Product Passport platform with per-unit authenticity, multi-actor on-chain custody, and dual-factor QR + NFC verification.
 
-OrigoVero uses this resolver in production to serve GS1 Digital Link URIs across multiple EU regulatory streams (wine, batteries, textiles, toys, packaging, construction). The resolver is released independently under Apache 2.0 so any DPP platform, brand, or compliance authority can run it without commercial dependency.
+OrigoVero serves GS1 Digital Link URIs across multiple EU regulatory streams (wine, batteries, textiles, toys, packaging, construction), and this project is the independently released, self-hostable implementation of that routing layer — built from scratch against the public GS1 standards and licensed Apache 2.0, so any DPP platform, brand, or compliance authority can run it without a commercial dependency.
 
 - OrigoVero: <https://www.origovero.com>
 - CIRPASS-2 Community of Practice member (Grigolato.IT, since March 2026)

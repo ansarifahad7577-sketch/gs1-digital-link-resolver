@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] — "Signpost" — 2026-09-04
+
+Closes a genuine conformance gap: the resolver now publishes the **GS1 resolver
+description file** required of a GS1-conformant resolver. Backward compatible —
+both contracts hold, no config change is needed to upgrade. Test suite 129 → 159.
+
+### Added
+
+- **`GET /.well-known/gs1resolver`** — the resolver description file, served as
+  `application/json` and validated against GS1's published
+  [description-file schema](https://ref.gs1.org/standards/resolver/description-file-schema)
+  (v1.2.0). The two mandatory fields are **derived from the running config** so
+  the published document cannot drift from actual behaviour:
+  - `supportedPrimaryKeys` — inferred from the primary keys the configured routes
+    can match (`primary_ai`, plus AI `01` for `gtin_prefix` / `gtin_regex`
+    clauses). A catch-all route is deliberately *not* reported as `"all"`.
+  - `resolverRoot` — the request origin, unless configured.
+- **Optional `well_known:` config block** — operator metadata (`name`,
+  `terms_of_use`, `contact`, `json_ld_context_location`, `extension_profile`,
+  `supported_link_type`, `link_type_default_can_be_linkset`, the
+  `supported_context_values_*` pair) and explicit overrides for the two
+  mandatory fields. Snake_case in YAML, mapped to the standard's camelCase.
+  Validated at **startup**: an unknown key, a non-GS1 primary key or a wrong
+  type raises `ConfigError` and refuses to start, so a non-conformant
+  description file can never be served.
+
+### Changed
+
+- **One version pin, not four.** `resolver/__init__.__version__` is now the
+  single source of truth: `pyproject.toml` reads it dynamically, `app.py`
+  re-exports it, and a test asserts the `Dockerfile` label matches. 1.0.0 shipped
+  with these out of step and needed a follow-up fix commit — this closes that
+  class of bug.
+- **README** — corrected the "Who built this" section, which stated that
+  OrigoVero runs *this* resolver in production. It does not: OrigoVero serves GS1
+  Digital Link URIs through its own routing layer, and this project is the
+  independently released, self-hostable implementation of that layer, built from
+  scratch against the public GS1 standards.
+
+### Notes
+
+The config schema major is **unchanged (1)** — `well_known:` is optional and
+additive, which the stability contract permits in a minor release.
+
 ## [1.0.0] — "Hallmark" — 2026-06-22
 
 First **stable** release. From this version the **configuration schema** and the

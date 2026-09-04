@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gs1-digital-link-resolver"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Open GS1 Digital Link Resolver for EU Digital Product Passports"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -29,6 +29,9 @@ dev = ["pytest", "httpx", "jsonschema", "ruff==0.6.9"]
 [project.urls]
 Homepage = "https://github.com/grigolatoe/gs1-digital-link-resolver"
 "Bug Tracker" = "https://github.com/grigolatoe/gs1-digital-link-resolver/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "resolver.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["resolver*"]

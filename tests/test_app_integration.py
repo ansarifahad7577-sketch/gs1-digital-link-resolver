@@ -192,7 +192,11 @@ def test_metrics_endpoint_prometheus_format(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain; version=0.0.4")
     body = response.text
-    assert 'gs1_resolver_build_info{version="1.0.0"} 1' in body
+    # Asserted against the package version rather than a literal, so a release
+    # bump cannot leave this test pinning a stale number.
+    from resolver import __version__
+
+    assert f'gs1_resolver_build_info{{version="{__version__}"}} 1' in body
     assert "# TYPE gs1_resolver_requests_total counter" in body
     assert "gs1_resolver_resolve_duration_seconds_count" in body
 
