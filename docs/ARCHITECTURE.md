@@ -248,7 +248,7 @@ validator:
 The `Validator` protocol is `runtime_checkable`, so any class with a
 `validate(parsed, target_url) -> ValidationResult` method satisfies it.
 This is the integration point for the CIRPASS-2 reference validator
-(milestone 3 of the NGI Commons Fund grant) — an `HttpValidator` that
+(milestone 3 of the NGI Zero Commons Fund application) — an `HttpValidator` that
 POSTs the resolved target to the CIRPASS-2 endpoint and surfaces the
 verdict in the link-set without blocking the response.
 

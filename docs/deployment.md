@@ -27,6 +27,7 @@ replicas behind a load balancer.
 | State | **None** — config is read once at startup; no DB, no disk writes |
 | Health endpoint | `GET /healthz` → `{"status":"ok"}` |
 | Resolve endpoint | `GET /{gs1-dl-path}` → 200 link-set / 302 (HTML) / 400 / 404 |
+| Description file | `GET /.well-known/gs1resolver` → 200 `application/json` |
 | Config source | `routes.yaml`, located via `CONFIG_PATH` |
 | Footprint | tens of MB RAM; CPU-bound on parsing only; sub-millisecond per resolve |
 
@@ -39,7 +40,7 @@ not a live reload.
 ```bash
 docker run -p 8080:8080 \
   -v ./config/routes.yaml:/app/config/routes.yaml \
-  ghcr.io/grigolatoe/gs1-digital-link-resolver:1.0.0
+  ghcr.io/grigolatoe/gs1-digital-link-resolver:1.1.0
 ```
 
 Verify it's up:
@@ -47,9 +48,10 @@ Verify it's up:
 ```bash
 curl -fsS http://localhost:8080/healthz          # {"status":"ok"}
 curl -fsS http://localhost:8080/01/09780345418913/21/ABC123 | jq .
+curl -fsS http://localhost:8080/.well-known/gs1resolver | jq .
 ```
 
-Pin a specific version tag in production (e.g. `:1.0.0`), not `:latest`, so
+Pin a specific version tag in production (e.g. `:1.1.0`), not `:latest`, so
 rollouts are deliberate. Every tag is PGP-signed — see
 [SIGNING.md](../SIGNING.md) to verify the image before deploying.
 
@@ -126,12 +128,25 @@ server {
 The link-set `anchor` echoes the request URL, so forwarding `Host` /
 `X-Forwarded-Proto` keeps the anchors correct.
 
+### `resolverRoot` behind a proxy
+
+The same applies to the description file: `resolverRoot` defaults to the origin
+the request arrived on, so a TLS-terminating proxy must forward those headers
+**and** uvicorn must be started with `--proxy-headers` for it to come out as
+`https://…`. Pinning the value is the safer production default — the published
+document then states the public resolver root regardless of proxy configuration:
+
+```yaml
+well_known:
+  resolver_root: "https://resolver.example.com"
+```
+
 ## Docker Compose
 
 ```yaml
 services:
   resolver:
-    image: ghcr.io/grigolatoe/gs1-digital-link-resolver:1.0.0
+    image: ghcr.io/grigolatoe/gs1-digital-link-resolver:1.1.0
     restart: unless-stopped
     volumes:
       - ./routes.yaml:/app/config/routes.yaml:ro
@@ -164,7 +179,7 @@ spec:
     spec:
       containers:
         - name: resolver
-          image: ghcr.io/grigolatoe/gs1-digital-link-resolver:1.0.0
+          image: ghcr.io/grigolatoe/gs1-digital-link-resolver:1.1.0
           ports:
             - containerPort: 8080
           volumeMounts:

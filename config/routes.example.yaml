@@ -30,6 +30,32 @@ validator:
   type: smoke
   profile: smoke-builtin-v1
 
+# Optional: operator metadata for the GS1 resolver description file served at
+# /.well-known/gs1resolver (required of a GS1-conformant resolver). The whole
+# block may be omitted — the two mandatory fields are then derived:
+#
+#   resolverRoot         → the origin the request arrived on. Behind a
+#                          TLS-terminating proxy, either run uvicorn with
+#                          --proxy-headers or set resolver_root explicitly.
+#   supportedPrimaryKeys → inferred from the primary keys your routes below can
+#                          actually match (here: 01 via gtin_* clauses, plus
+#                          8003 from the GRAI rule).
+#
+# A catch-all route is NOT reported as "all" — declaring blanket support for
+# every GS1 key is a claim to make deliberately via supported_primary_keys.
+#
+# The published document validates against
+# https://ref.gs1.org/standards/resolver/description-file-schema
+well_known:
+  name: "Example DPP Resolver"
+  # resolver_root: "https://id.example.com"
+  # supported_primary_keys: ["01", "8003"]
+  contact:
+    fn: "Example Brand B.V."
+    hasAddress:
+      locality: "Amsterdam"
+      country-name: "Netherlands"
+
 resolvers:
 
   # Route by GTIN prefix (e.g. your brand's GS1 company prefix, padded)

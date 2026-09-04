@@ -22,6 +22,7 @@ Stable surface:
 | `resolvers[].match` | `"*"` or mapping | Clauses: `primary_ai`, `gtin_prefix`, `gtin_regex`, `has_qualifier`, `serial_in`. Omitted / `"*"` / `{}` = fallback. |
 | `resolvers[].link_types[]` | list of mappings | Each needs `rel` + `href`; optional `type`, `title`, `hreflang`. |
 | `validator` | mapping | `type: noop\|smoke\|schema\|http` (+ type-specific keys). |
+| `well_known` | mapping | Optional operator metadata for `/.well-known/gs1resolver`. Keys: `resolver_root`, `supported_primary_keys`, `name`, `terms_of_use`, `supported_link_type`, `link_type_default_can_be_linkset`, `supported_context_values_enumerated`, `supported_context_values_external`, `extension_profile`, `json_ld_context_location`, `contact`. |
 
 **Covered by SemVer:** existing keys keep their meaning; a malformed config
 fails fast at startup with a `ConfigError`. New **optional** keys and new match
@@ -35,6 +36,7 @@ renaming a key, or changing match precedence, is a **major** change.
 | `GET /{gs1-dl-path}` | Parse + resolve. Content negotiation below. |
 | `GET /healthz` | `200 {"status":"ok"}`. |
 | `GET /metrics` | Prometheus text exposition (`text/plain; version=0.0.4`). |
+| `GET /.well-known/gs1resolver` | `200 application/json` — the GS1 resolver description file, valid against GS1's [description-file schema](https://ref.gs1.org/standards/resolver/description-file-schema). Always carries `resolverRoot` + `supportedPrimaryKeys`. |
 
 Content negotiation on the resolve endpoint (stable):
 

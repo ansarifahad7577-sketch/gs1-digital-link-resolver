@@ -31,6 +31,7 @@ import yaml
 
 from .parser import GS1ParseResult
 from .validator import NoOpValidator, Validator, load_validator
+from .wellknown import WellKnownConfigError, validate_well_known_config
 
 # The config schema is versioned and stable under SemVer (see docs/stability.md).
 # A breaking change to the schema bumps this major. `version:` is optional in
@@ -86,6 +87,14 @@ def _validate_config(config: object) -> dict:
                 if required not in lt or not isinstance(lt[required], str) or not lt[required]:
                     raise ConfigError(f"{ltwhere} must have a non-empty string '{required}'")
 
+    # A malformed description file would be served as non-conformant JSON at
+    # /.well-known/gs1resolver, so it fails the service at startup like any
+    # other broken config rather than surfacing at request time.
+    try:
+        validate_well_known_config(config.get("well_known"))
+    except WellKnownConfigError as e:
+        raise ConfigError(str(e)) from None
+
     return config
 
 
@@ -140,8 +149,14 @@ class Router:
     def __init__(self, config_path: str | Path | None = None):
         self._routes: list[Route] = []
         self.validator: Validator = NoOpValidator()
+        self.well_known: dict = {}
         if config_path is not None:
             self.load(config_path)
+
+    @property
+    def routes(self) -> list[Route]:
+        """The loaded routes, in match order (read-only view)."""
+        return list(self._routes)
 
     def load(self, path: str | Path) -> None:
         with open(path) as f:
@@ -167,6 +182,7 @@ class Router:
                 )
             )
         self.validator = load_validator(config.get("validator"))
+        self.well_known = validate_well_known_config(config.get("well_known"))
 
     def resolve(self, parsed: GS1ParseResult) -> tuple[str, list[LinkType]] | None:
         """

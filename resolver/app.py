@@ -13,6 +13,9 @@ parses them, and responds according to content negotiation rules:
 Per GS1 DL §6.4 the `?linkType=` query parameter narrows the response to a
 single relation when supplied.
 
+The service also publishes its GS1 resolver description file at
+`/.well-known/gs1resolver`, as required of a conformant resolver.
+
 Run with:
     uvicorn resolver.app:app --host 0.0.0.0 --port 8080
 
@@ -32,16 +35,20 @@ from pathlib import Path
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 
+from . import __version__ as _package_version
 from . import metrics
 from .linkset import build_jsonld, build_linkset, default_link_href
 from .logging_config import configure_logging
 from .negotiate import select_media_type
 from .parser import parse, validate_gtin14
 from .router import Router
+from .wellknown import WELL_KNOWN_PATH, build_well_known
 
 CONFIG_PATH = Path(os.environ.get("CONFIG_PATH", "/app/config/routes.yaml"))
 
-VERSION = "1.0.0"
+#: Re-exported from the package so the service, the packaging metadata and the
+#: build-info metric can never disagree (they did once — see CHANGELOG 1.0.0).
+VERSION = _package_version
 
 configure_logging(os.environ.get("LOG_LEVEL", "INFO"))
 _access_log = logging.getLogger("resolver.access")
@@ -99,6 +106,28 @@ def healthz() -> dict:
 @app.get("/metrics")
 def prometheus_metrics() -> Response:
     return PlainTextResponse(metrics.render(), media_type=metrics.CONTENT_TYPE)
+
+
+@app.get(WELL_KNOWN_PATH)
+def gs1_resolver_description(request: Request) -> Response:
+    """The GS1 resolver description file.
+
+    Declared before the catch-all so the path is served as the discovery
+    document rather than parsed as a GS1 Digital Link URI.
+
+    ``resolverRoot`` falls back to the origin this request arrived on. Behind a
+    TLS-terminating proxy that origin is only correct if the proxy's forwarded
+    headers are honoured (run uvicorn with ``--proxy-headers``); operators who
+    would rather not depend on that should set ``well_known.resolver_root``
+    explicitly in routes.yaml.
+    """
+    router = get_router()
+    document = build_well_known(
+        router.well_known,
+        routes=router.routes,
+        request_root=str(request.base_url),
+    )
+    return JSONResponse(document, media_type="application/json")
 
 
 @app.get("/{path:path}")

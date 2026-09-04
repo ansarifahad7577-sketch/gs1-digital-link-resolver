@@ -4,14 +4,16 @@ Forward-looking plan. **1.0.0 has shipped** — every blocker below is done and
 the contracts are frozen under SemVer. What remains is post-1.0 polish and
 deferred work. For shipped detail see [CHANGELOG.md](CHANGELOG.md).
 
-## Where we are (1.0.0 "Hallmark")
+## Where we are (1.1.0 "Signpost")
 
 The resolver is **functionally complete** for GS1 Digital Link v1.2 routing:
 parser + full AI table, declarative YAML routing, RFC 9264 link-sets, content
-negotiation, four DPP validators (noop/smoke/schema/http), `/healthz`,
-Prometheus `/metrics`, signed Docker releases, and a deployment guide. The four
-NGI Zero Commons Fund milestones (parser, core resolver, validator wire-up,
-deployment docs) are delivered.
+negotiation, four DPP validators (noop/smoke/schema/http), the
+`/.well-known/gs1resolver` description file, `/healthz`, Prometheus `/metrics`,
+signed Docker releases, and a deployment guide. The four milestones proposed in
+the NGI Zero Commons Fund application (parser, core resolver, validator wire-up,
+deployment docs) are delivered — built independently of that application's
+outcome, which is still under review.
 
 ## What 1.0 *means* here
 
@@ -54,14 +56,22 @@ hardened for untrusted public traffic.
 - [ ] **CIRPASS-2 CoP release announcement** (NGI M4 deliverable) — external,
   maintainer-posted.
 
+## Shipped post-1.0
+
+- [x] **`/.well-known/gs1resolver` description file** (1.1.0) — required of a
+  GS1-conformant resolver; validates against GS1's published description-file
+  schema, with the mandatory fields derived from the running config.
+
 ## Deferred to 1.x (explicitly NOT 1.0 blockers)
 
 - **Bundled normative DPP profile** — blocked on a stable, openly-licensed
-  standard. Tracking UNTP (UNECE) toward a post-review stable release (v0.7.0
-  public review closes 2026-07-13); its current source licence (GPL-3.0) also
-  precludes vendoring into this Apache-2.0 project. The `schema`/`http`
-  validators already work with any operator-supplied schema, so this does not
-  gate 1.0.
+  standard. Tracking UNTP (UNECE), still at v0.7.0 and labelled Work in Progress
+  as of September 2026. ⚠️ The licence position here needs re-checking before it
+  is restated: UN/CEFACT publishes its standards under CC BY 4.0, so the earlier
+  "GPL-3.0 precludes vendoring" note may describe only the `uncefact/spec-untp`
+  source repository, not the schemas themselves. Either way the `schema`/`http`
+  validators already work with any operator-supplied schema, so this gates
+  nothing.
 - **Compressed DL URI support** — if scoped out of 1.0 above.
 - **Native tracing (OpenTelemetry)** — `/metrics` covers the 1.0 observability bar.
 
